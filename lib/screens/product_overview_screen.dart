@@ -28,6 +28,7 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
         title: Text('MyShop'),
         actions: <Widget>[
           PopupMenuButton(
+            color: Colors.amberAccent,//add background color to popupmenu
             onSelected: (FilterOptions selectedValue) {
               setState(() {
                 if (selectedValue == FilterOptions.Favorites) {
