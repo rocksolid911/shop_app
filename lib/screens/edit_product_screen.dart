@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../providers/product.dart';
 
 class EditProductScreen extends StatefulWidget {
   static const routeName = '/edit-product';
@@ -12,20 +13,31 @@ class _EditProductScreenState extends State<EditProductScreen> {
   final _descriptionFocusNode = FocusNode();
   final _imageUrlController = TextEditingController();
   final _imageUrlFocusNode = FocusNode();
- @override
- void initState(){
-   _imageUrlFocusNode.addListener(_updateImageUrl);
-   super.initState();
- }
- void _updateImageUrl(){ //does the trick follow[1*1]
-if(!_imageUrlFocusNode.hasFocus){
-  setState(() {});
+  final _form = GlobalKey<FormState>();
+  var _editedProduct = Product(
+    id: null,
+    title: '',
+    description: '',
+    imageUrl: '',
+    price: 0,
+  );
+  @override
+  void initState() {
+    _imageUrlFocusNode.addListener(_updateImageUrl);
+    super.initState();
   }
-}
+
+  void _updateImageUrl() {
+    //does the trick follow[1*1]
+    if (!_imageUrlFocusNode.hasFocus) {
+      setState(() {});
+    }
+  }
+
 //dispose all nodes and listner to prevent memory leaks
   @override
   void dispose() {
-   _imageUrlFocusNode.removeListener(_updateImageUrl);
+    _imageUrlFocusNode.removeListener(_updateImageUrl);
     _priceFocusNode.dispose();
     _descriptionFocusNode.dispose();
     _imageUrlController.dispose();
@@ -33,15 +45,25 @@ if(!_imageUrlFocusNode.hasFocus){
     super.dispose();
   }
 
+  void _saveForm() {
+    _form.currentState.save();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Edit Product'),
+        actions: <Widget>[
+          IconButton(icon: Icon(Icons.save), onPressed: _saveForm),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
+          key: _form,
+          /*established connection between _saveform method and
+          form widget*/
           child: ListView(
             children: <Widget>[
               TextFormField(
@@ -49,6 +71,15 @@ if(!_imageUrlFocusNode.hasFocus){
                 textInputAction: TextInputAction.next,
                 onFieldSubmitted: (_) {
                   FocusScope.of(context).requestFocus(_priceFocusNode);
+                },
+                onSaved: (value) { //value will be the properties being edited
+                  _editedProduct = Product(
+                    title: value,
+                    price: _editedProduct.price,
+                    description: _editedProduct.description,
+                    imageUrl: _editedProduct.imageUrl,
+                    id: null,
+                  );
                 },
               ),
               TextFormField(
@@ -59,12 +90,30 @@ if(!_imageUrlFocusNode.hasFocus){
                 onFieldSubmitted: (_) {
                   FocusScope.of(context).requestFocus(_descriptionFocusNode);
                 },
+                onSaved: (value) {
+                  _editedProduct = Product(
+                    title: _editedProduct.title,
+                    price: double.parse (value),//price required a no
+                    description: _editedProduct.description,
+                    imageUrl: _editedProduct.imageUrl,
+                    id: null,
+                  );
+                },
               ),
               TextFormField(
                 decoration: InputDecoration(labelText: 'Description'),
                 maxLines: 3,
                 keyboardType: TextInputType.multiline,
                 focusNode: _descriptionFocusNode,
+                onSaved: (value) {
+                  _editedProduct = Product(
+                    title: _editedProduct.title,
+                    price: _editedProduct.price,//price required a no
+                    description: value,
+                    imageUrl: _editedProduct.imageUrl,
+                    id: null,
+                  );
+                },
               ),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -85,11 +134,11 @@ if(!_imageUrlFocusNode.hasFocus){
                     child: _imageUrlController.text.isEmpty
                         ? Text('Enter a URL')
                         : FittedBox(
-                      child: Image.network(
-                        _imageUrlController.text,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
+                            child: Image.network(
+                              _imageUrlController.text,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                   ),
                   Expanded(
                     child: TextFormField(
@@ -97,9 +146,22 @@ if(!_imageUrlFocusNode.hasFocus){
                       keyboardType: TextInputType.url,
                       textInputAction: TextInputAction.done,
                       controller: _imageUrlController,
-                      focusNode: _imageUrlFocusNode,/*it is use to change behaviour
+                      focusNode: _imageUrlFocusNode,
+                      /*it is use to change behaviour
                       //of image textfield i.e when going to other field then also
                       //the image previewed..[1*1].*/
+                      onFieldSubmitted: (_) {
+                        _saveForm();
+                      },
+                      onSaved: (value) {
+                        _editedProduct = Product(
+                          title: _editedProduct.title,
+                          price: _editedProduct.price,//price required a no
+                          description: _editedProduct.description,
+                          imageUrl: value,
+                          id: null,
+                        );
+                      },
                     ),
                   ),
                 ],
